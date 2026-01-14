@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login / Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    input {
+      width: 100%;
+      padding: .6rem;
+      margin-bottom: .8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: .6rem;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .toggle {
+      margin-top: 1rem;
+      text-align: center;
+      cursor: pointer;
+      color: #007bff;
+      font-size: .9rem;
+    }
+
+    .message {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: .9rem;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .success {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2 id="title">Login</h2>
+
+  <input type="text" id="username" placeholder="Usuario">
+  <input type="password" id="password" placeholder="Contraseña">
+
+  <button onclick="submitForm()">Enviar</button>
+
+  <div class="toggle" onclick="toggleMode()">
+    ¿No tenés cuenta? Registrate
+  </div>
+
+  <div id="message" class="message"></div>
+</div>
+
+<script>
+  let mode = 'login'; // login | register
+
+  function toggleMode() {
+    mode = mode === 'login' ? 'register' : 'login';
+    document.getElementById('title').innerText =
+      mode === 'login' ? 'Login' : 'Registro';
+
+    document.querySelector('.toggle').innerText =
+      mode === 'login'
+        ? '¿No tenés cuenta? Registrate'
+        : '¿Ya tenés cuenta? Iniciá sesión';
+
+    document.getElementById('message').innerText = '';
+  }
+
+  async function submitForm() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const message = document.getElementById('message');
+
+    message.innerText = '';
+    message.className = 'message';
+
+    try {
+      const res = await fetch(`/${mode}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data);
+      }
+
+      message.innerText =
+        mode === 'login'
+          ? `Bienvenido ${data.user.username}`
+          : `Usuario creado con ID ${data.id}`;
+
+      message.classList.add('success');
+
+    } catch (err) {
+      message.innerText = err.message || 'Error inesperado';
+      message.classList.add('error');
+    }
+  }
+</script>
+
+</body>
+</html>
