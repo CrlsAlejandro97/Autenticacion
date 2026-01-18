@@ -11,9 +11,21 @@ app.set('view engine', 'ejs')
 app.use(express.json())
 app.use(cookieParser())
 
+app.use((req, res, next) => {
+    const token = req.cookies.access_token
+    req.session = { user: null }
+    try {
+        const data = jwt.verify(token, SECRET_JWT_KEY)
+        req.session.user = data
+    } catch {}
+
+    next () // seguir a la siguiente ruta o middleware
+})
+
 
 app.get('/', (req, res) => {
-    res.render('index')
+    const { user } = req.session
+    res.render('index', user)
 })
 
 app.post('/login', async(req, res) => {
@@ -51,7 +63,11 @@ app.post('/register', async(req, res) => {
 })
 app.post('/logout', (req, res) => {})
 
-app.get('/protected', (req, res) => {})
+app.get('/protected', (req, res) => {
+    const { user } = req.session
+    if (!user) return res.status(403).send('Access not authorize')
+    res.status(200).send('Acces authorize :)')
+})
 
 app.listen(PORT, () =>{
     console.log(`Server running on port ${PORT}`)
