@@ -1,7 +1,8 @@
 import express from "express";
 import jwt from 'jsonwebtoken'
 import { PORT } from "./config.js";
-import { SECRET_JWT_KEY } from "./config.js";
+import { JWT_SECRET } from "./config.js";
+import {JWT_SECRET_IN } from "./config.js"
 import { UserRepository } from "./user-repository.js";
 import cookieParser from "cookie-parser";
 import { use } from "bcrypt/promises.js";
@@ -15,7 +16,7 @@ app.use((req, res, next) => {
     const token = req.cookies.access_token
     req.session = { user: null }
     try {
-        const data = jwt.verify(token, SECRET_JWT_KEY)
+        const data = jwt.verify(token, JWT_SECRET)
         req.session.user = data
     } catch {}
 
@@ -37,7 +38,7 @@ app.post('/login', async(req, res) => {
             {id: user._id, username: user.username}, 
             SECRET_JWT_KEY,
             {
-                expiresIn: '1h'
+                expiresIn: JWT_SECRET_IN
             })
         res
         .cookie('access_token',token,{
