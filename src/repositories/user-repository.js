@@ -1,44 +1,49 @@
-import DBLocal from 'db-local'
+import { pool } from '../db/mysql.js'
 import bcrypt from 'bcrypt'
 import { SALT_ROUNDS } from '../../config.js'
 
-const { Schema } = new DBLocal({path: './db'})
 
-const User = Schema('User',{
-    _id: {type: String, required: true},
-    username: {type: String, required: true},
-    password: {type: String, required: true}
-    })
+
 
 export class UserRepository{
+
     static async create ({username, password}){
         // 1. Validaciones de username (opcional: usar zod)
         Validation.username(username)
         Validation.password(password)
 
         // 2. Asegurarse que username no existe
-        const user = User.findOne({username})
-        if (user) throw new Error('username already exists')
+        const [ users ] = await pool.query(
+            'SELECT * FROM users WHERE username = ?', [username]
+        )
+
+        if (users.length  > 0) {
+            throw new Error("el usuario ya existe");
+            
+        }
 
         const id = crypto.randomUUID()
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
 
-        User.create({
-            _id: id,
-            username,
-            password:hashedPassword
-        }).save()
+        await pool.query(
+            'INSERT INTO users (id, username, password) VALUES (?, ?, ?)', 
+            [id, username, hashedPassword]
+        )
 
         return id
     }
+    
     static async login ({username, password}){
         Validation.username(username)
         Validation.password(password)
-        const user = User.findOne({ username })
-        if (!user) throw new Error('username does not exist')
+        const [users] = await pool.query(
+            'SELECT * FROM users WHERE username = ?', [username]
+        )
+        const user = users[0]
+        if (!user) throw new Error('el usuario no existe')
 
         const isValid = await bcrypt.compareSync(password, user.password)
-        if (!isValid) throw new Error('password is invalid')
+        if (!isValid) throw new Error('contraseña incorrecta')
         
         const {password: _, ... publicUser} = user // para no devolver password en la response
         return publicUser
