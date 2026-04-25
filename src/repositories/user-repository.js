@@ -42,7 +42,7 @@ export class UserRepository{
         const user = users[0]
         if (!user) throw new Error('el usuario no existe')
 
-        const isValid = await bcrypt.compareSync(password, user.password)
+        const isValid = await bcrypt.compare(password, user.password_hash)
         if (!isValid) throw new Error('contraseña incorrecta')
         
         const {password: _, ... publicUser} = user // para no devolver password en la response
