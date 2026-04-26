@@ -15,7 +15,7 @@ export const server = {
 }
 
 export const SALT_ROUNDS = Number(process.env.SALT_ROUNDS || 10)
-export const JWT_SECRET = process.env.JWT_SECRETS
+export const JWT_SECRETS = process.env.JWT_SECRETS
 export const JWT_SECRET_IN = '1h'
 
 // Validación de variables críticas

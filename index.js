@@ -1,7 +1,7 @@
 import express from "express";
 import jwt from 'jsonwebtoken'
 import { server } from "./config.js";
-import { JWT_SECRET } from "./config.js";
+import { JWT_SECRETS } from "./config.js";
 import {JWT_SECRET_IN } from "./config.js"
 import { UserRepository } from "./src/repositories/user-repository.js";
 import cookieParser from "cookie-parser";
@@ -36,7 +36,7 @@ app.post('/login', async(req, res) => {
         const user = await UserRepository.login({username,password})
         const token = jwt.sign(
             {id: user._id, username: user.username}, 
-            SECRET_JWT_KEY,
+            JWT_SECRETS,
             {
                 expiresIn: JWT_SECRET_IN
             })

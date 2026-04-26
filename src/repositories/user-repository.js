@@ -26,7 +26,7 @@ export class UserRepository{
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
 
         await pool.query(
-            'INSERT INTO users (id, username, password) VALUES (?, ?, ?)', 
+            'INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)', 
             [id, username, hashedPassword]
         )
 
