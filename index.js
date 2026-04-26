@@ -1,8 +1,9 @@
 import express from "express";
 import jwt from 'jsonwebtoken'
-import { PORT } from "./config.js";
-import { SECRET_JWT_KEY } from "./config.js";
-import { UserRepository } from "./user-repository.js";
+import { server } from "./config.js";
+import { JWT_SECRETS } from "./config.js";
+import {JWT_SECRET_IN } from "./config.js"
+import { UserRepository } from "./src/repositories/user-repository.js";
 import cookieParser from "cookie-parser";
 import { use } from "bcrypt/promises.js";
 
@@ -15,7 +16,7 @@ app.use((req, res, next) => {
     const token = req.cookies.access_token
     req.session = { user: null }
     try {
-        const data = jwt.verify(token, SECRET_JWT_KEY)
+        const data = jwt.verify(token, JWT_SECRET)
         req.session.user = data
     } catch {}
 
@@ -35,9 +36,9 @@ app.post('/login', async(req, res) => {
         const user = await UserRepository.login({username,password})
         const token = jwt.sign(
             {id: user._id, username: user.username}, 
-            SECRET_JWT_KEY,
+            JWT_SECRETS,
             {
-                expiresIn: '1h'
+                expiresIn: JWT_SECRET_IN
             })
         res
         .cookie('access_token',token,{
@@ -49,6 +50,7 @@ app.post('/login', async(req, res) => {
         .send({user,token})
     } catch (error){
         res.status(401).send(error.message)
+        console.error(error)
     }
 })
 app.post('/register', async(req, res) => {
@@ -69,6 +71,6 @@ app.get('/protected', (req, res) => {
     res.status(200).send('Acces authorize :)')
 })
 
-app.listen(PORT, () =>{
-    console.log(`Server running on port ${PORT}`)
+app.listen(server.port, () =>{
+    console.log(`Server running on port ${server.port}`)
 })
