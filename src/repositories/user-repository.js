@@ -1,63 +1,67 @@
-import { pool } from '../db/mysql.js'
+import { getConnection } from '../db/mysql.js'
 import bcrypt from 'bcrypt'
-import { SALT_ROUNDS } from '../../config.js'
+import crypto from 'crypto'
+import { config } from '../../config.js'
 
+export class UserRepository {
 
+  static async create({ username, password }) {
+    Validation.username(username)
+    Validation.password(password)
 
+    const conn = await getConnection()
 
-export class UserRepository{
+    const [users] = await conn.query(
+      'SELECT * FROM users WHERE username = ?', [username]
+    )
 
-    static async create ({username, password}){
-        // 1. Validaciones de username (opcional: usar zod)
-        Validation.username(username)
-        Validation.password(password)
-
-        // 2. Asegurarse que username no existe
-        const [ users ] = await pool.query(
-            'SELECT * FROM users WHERE username = ?', [username]
-        )
-
-        if (users.length  > 0) {
-            throw new Error("el usuario ya existe");
-            
-        }
-
-        const id = crypto.randomUUID()
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
-
-        await pool.query(
-            'INSERT INTO users (id, username, password) VALUES (?, ?, ?)', 
-            [id, username, hashedPassword]
-        )
-
-        return id
+    if (users.length > 0) {
+      throw new Error("el usuario ya existe")
     }
-    
-    static async login ({username, password}){
-        Validation.username(username)
-        Validation.password(password)
-        const [users] = await pool.query(
-            'SELECT * FROM users WHERE username = ?', [username]
-        )
-        const user = users[0]
-        if (!user) throw new Error('el usuario no existe')
 
-        const isValid = await bcrypt.compare(password, user.password_hash)
-        if (!isValid) throw new Error('contraseña incorrecta')
-        
-        const {password: _, ... publicUser} = user // para no devolver password en la response
-        return publicUser
-    }
+    const id = crypto.randomUUID()
+    const hashedPassword = await bcrypt.hash(
+      password,
+      config.security.saltRounds
+    )
+
+    await conn.query(
+      'INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)',
+      [id, username, hashedPassword]
+    )
+
+    return id
+  }
+
+  static async login({ username, password }) {
+    Validation.username(username)
+    Validation.password(password)
+
+    const conn = await getConnection()
+
+    const [users] = await conn.query(
+      'SELECT * FROM users WHERE username = ?', [username]
+    )
+
+    const user = users[0]
+    if (!user) throw new Error('el usuario no existe')
+
+    const isValid = await bcrypt.compare(password, user.password_hash)
+    if (!isValid) throw new Error('contraseña incorrecta')
+
+    const { password_hash: _, ...publicUser } = user
+    return publicUser
+  }
 }
 
 class Validation {
-    static username(username){
-        if (typeof username !== 'string') throw new Error('username must be a string')
-        if (username.length < 3) throw new Error('username must be at least 3 characters log')
-    }
+  static username(username) {
+    if (typeof username !== 'string') throw new Error('username must be a string')
+    if (username.length < 3) throw new Error('username must be at least 3 characters')
+  }
 
-    static password(password){
-        if (typeof password !== 'string') throw new Error('password must be a string')
-        if (password.length < 6) throw new Error('password must be at least 6 characters log')
-    }
+  static password(password) {
+    if (typeof password !== 'string') throw new Error('password must be a string')
+    if (password.length < 6) throw new Error('password must be at least 6 characters')
+  }
 }

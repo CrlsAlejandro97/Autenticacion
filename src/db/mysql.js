@@ -1,26 +1,22 @@
-import mysql from 'mysql2/promise';
-import { DB_CONFIG } from '../../config.js';
-import { createPool } from 'mysql2';
+import mysql from 'mysql2/promise'
+import { getDbCredentials } from '../services/vault.js'
+import { config } from '../config.js'
 
-//Create the connection to database
-export const pool = await mysql.createPool({
-    host: DB_CONFIG.host,
-    user: DB_CONFIG.user,
-    password: DB_CONFIG.password,
-    database: DB_CONFIG.name,
-    waitForConnections: true,
-    connectionLimit: 10
-})
+let connection = null
 
-const testConnection = async () => {
-    try{
-        const connection = await pool.getConnection()
-        connection.release()
-        console.log('Mysql Conectado')
-    } catch (error){
-        console.error('Error conectado mysql:', error.message)
-        process.exit(1)
-    }
+export const getConnection = async () => {
+  if (connection) return connection
+
+  const creds = await getDbCredentials()
+
+  console.log('🔐 Credenciales dinámicas obtenidas de Vault')
+
+  connection = await mysql.createConnection({
+    host: config.db.host,
+    user: creds.user,
+    password: creds.password,
+    database: config.db.name
+  })
+
+  return connection
 }
-
-testConnection()

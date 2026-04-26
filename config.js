@@ -2,13 +2,19 @@ import 'dotenv/config'
 
 export const ENV = process.env.NODE_ENV || 'development'
 
-export const DB_CONFIG = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    name: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT || 3306)
+//VAULT
+export const config = {
+  vault: {
+    addr: process.env.VAULT_ADDR,
+    token: process.env.VAULT_TOKEN,
+    role: process.env.VAULT_ROLE
+  },
+  db: {
+    host: '192.168.0.13',
+    name: 'db'
+  }
 }
+
 
 export const server = {
     port:Number(process.env.PORT || 3000)
